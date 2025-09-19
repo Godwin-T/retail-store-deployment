@@ -75,6 +75,26 @@ resource "kubernetes_secret" "catalog_db" {
   ]
 }
 
+# ExternalName Service to resolve catalog-db to Aurora endpoint
+resource "kubernetes_service" "catalog_db" {
+  provider = kubernetes.cluster
+
+  metadata {
+    name      = "catalog-db"
+    namespace = kubernetes_namespace.retail.metadata[0].name
+  }
+
+  spec {
+    type          = "ExternalName"
+    external_name = module.catalog_rds_v2.cluster_endpoint
+  }
+
+  depends_on = [
+    kubernetes_namespace.retail,
+    module.catalog_rds_v2,
+  ]
+}
+
 # Deployment: catalog
 resource "kubernetes_deployment" "catalog" {
   provider = kubernetes.cluster
@@ -112,15 +132,24 @@ resource "kubernetes_deployment" "catalog" {
         init_container {
           name  = "wait-for-mysql"
           image = "busybox:1.36"
+          env {
+            name = "ENDPOINT"
+            value_from {
+              config_map_key_ref {
+                name = kubernetes_config_map.catalog.metadata[0].name
+                key  = "RETAIL_CATALOG_PERSISTENCE_ENDPOINT"
+              }
+            }
+          }
           command = [
             "sh",
             "-c",
-            "until nc -z ${module.catalog_rds_v2.cluster_endpoint} ${module.catalog_rds_v2.cluster_port}; do echo waiting for mysql; sleep 5; done"
+            "HOST=$(echo \"$ENDPOINT\" | cut -d: -f1); PORT=$(echo \"$ENDPOINT\" | cut -d: -f2); until nc -z \"$HOST\" \"$PORT\"; do echo waiting for mysql; sleep 5; done"
           ]
         }
         container {
           name  = "catalog"
-          image = "public.ecr.aws/aws-containers/retail-store-sample-catalog"
+          image = "public.ecr.aws/aws-containers/retail-store-sample-catalog:1.3.0"
 
           port {
             name           = "http"
@@ -263,7 +292,7 @@ resource "kubernetes_deployment" "carts" {
 
         container {
           name  = "carts"
-          image = "public.ecr.aws/aws-containers/retail-store-sample-cart"
+          image = "public.ecr.aws/aws-containers/retail-store-sample-cart:1.3.0"
 
           port {
             name           = "http"
@@ -434,7 +463,7 @@ resource "kubernetes_deployment" "orders" {
       spec {
         container {
           name  = "orders"
-          image = "public.ecr.aws/aws-containers/retail-store-sample-orders"
+          image = "public.ecr.aws/aws-containers/retail-store-sample-orders:1.3.0"
 
           port {
             name           = "http"
@@ -568,7 +597,7 @@ resource "kubernetes_deployment" "ui" {
       spec {
         container {
           name  = "ui"
-          image = "public.ecr.aws/aws-containers/retail-store-sample-ui"
+          image = "public.ecr.aws/aws-containers/retail-store-sample-ui:1.3.0"
 
           port {
             name           = "http"
