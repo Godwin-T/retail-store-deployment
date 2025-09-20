@@ -1,13 +1,3 @@
-######################################################################
-# Dependencies v2 (no local module)
-#
-# Recreates DBs, DynamoDB, AmazonMQ, and ElastiCache directly, mirroring
-# the behavior of retail-store-app/terraform/lib/dependencies.
-#
-# Note: Keep this mutually exclusive with dependencies.tf to avoid
-# naming conflicts. Use either v1 (module) or v2 (inline), not both.
-######################################################################
-
 # Ensure EKS exists first so SG references/allow rules are valid
 locals {
   env_name = var.cluster_name

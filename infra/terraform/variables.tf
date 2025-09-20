@@ -7,7 +7,7 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "EKS Kubernetes version"
   type        = string
-  default     = "1.29"
+  default     = "1.33"
 }
 
 variable "vpc_cidr" {
@@ -31,19 +31,19 @@ variable "node_instance_types" {
 variable "node_min_size" {
   description = "Node group min size"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "node_desired_size" {
   description = "Node group desired size"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "node_max_size" {
   description = "Node group max size"
   type        = number
-  default     = 4
+  default     = 2
 }
 
 variable "enable_cluster_encryption" {
