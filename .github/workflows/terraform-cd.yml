@@ -6,8 +6,6 @@ on:
       - main
     paths:
       - 'infra/terraform/**'
-      # - 'deployment/**'
-      # - 'retail-store-app/src/**/chart/**'
 
 permissions:
   id-token: write
@@ -62,4 +60,3 @@ jobs:
         run: |
           echo "region=${{ secrets.AWS_REGION }}" >> $GITHUB_OUTPUT
 
-  # Application deploys are now handled by Terraform helm_release resources.
