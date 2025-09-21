@@ -55,12 +55,3 @@ jobs:
       - name: Save Plan Text
         run: terraform show -no-color .tfplan > plan.txt
 
-      - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan-${{ github.sha }}
-          path: |
-            infra/terraform/.tfplan
-            infra/terraform/plan.txt
-
-  # No apply in CI; CD workflow handles apply and app deployments
