@@ -147,7 +147,7 @@ resource "kubernetes_deployment" "catalog" {
 #            "HOST=$(echo \"$ENDPOINT\" | cut -d: -f1); PORT=$(echo \"$ENDPOINT\" | cut -d: -f2); until nc -z \"$HOST\" \"$PORT\"; do echo waiting for mysql; sleep 5; done"
 #          ]
 #        }
-#        container {
+        container {
           name  = "catalog"
           image = "public.ecr.aws/aws-containers/retail-store-sample-catalog:1.3.0"
 
