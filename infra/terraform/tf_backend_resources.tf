@@ -30,8 +30,8 @@ resource "aws_s3_bucket_versioning" "tf_state" {
 }
 
 resource "aws_s3_bucket_public_access_block" "tf_state" {
-  count  = var.manage_backend ? 1 : 0
-  bucket = aws_s3_bucket.tf_state[0].id
+  count                   = var.manage_backend ? 1 : 0
+  bucket                  = aws_s3_bucket.tf_state[0].id
   block_public_acls       = true
   ignore_public_acls      = true
   block_public_policy     = true

@@ -7,11 +7,11 @@ terraform {
       version = "~> 5.0"
     }
     kubernetes = {
-      source  = "hashicorp/kubernetes"
+      source = "hashicorp/kubernetes"
       # version is pinned by .terraform.lock.hcl
     }
     helm = {
-      source  = "hashicorp/helm"
+      source = "hashicorp/helm"
       # version is pinned by .terraform.lock.hcl
     }
   }

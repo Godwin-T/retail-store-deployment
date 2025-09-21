@@ -21,9 +21,9 @@ data "aws_iam_policy_document" "developers_trust" {
 }
 
 resource "aws_iam_role" "developers" {
-  name               = var.developers_role_name
-  assume_role_policy = data.aws_iam_policy_document.developers_trust.json
-  description        = "Role for developers to access EKS cluster (read-only kubectl)"
+  name                  = var.developers_role_name
+  assume_role_policy    = data.aws_iam_policy_document.developers_trust.json
+  description           = "Role for developers to access EKS cluster (read-only kubectl)"
   force_detach_policies = true
 }
 

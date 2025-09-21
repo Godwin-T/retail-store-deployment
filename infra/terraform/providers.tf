@@ -18,12 +18,12 @@ terraform {
 # EKS cluster access for Kubernetes and Helm providers
 # Delay reading the EKS cluster until after it is created by the module
 data "aws_eks_cluster" "this" {
-  name = module.eks.cluster_name
+  name       = module.eks.cluster_name
   depends_on = [module.eks]
 }
 
 data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
+  name       = module.eks.cluster_name
   depends_on = [module.eks]
 }
 
