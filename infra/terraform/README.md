@@ -116,7 +116,6 @@ Setup:
   - `TF_STATE_LOCK_TABLE`: e.g., `<YOUR_DYNAMODB_TABLE_NAME>`.
 - Optional: protect the `prod` environment to require approval before apply/deploy.
 
-
 Notes:
 - `providers.tf` contains `terraform { backend "s3" {} }`; backend values are provided via CLI flags in CI and in the commands above.
 - The bucket/table are created and optionally managed by this stack behind the `manage_backend` toggle. Use it only for bootstrap to avoid accidental destroys.
