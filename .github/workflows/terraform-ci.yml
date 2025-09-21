@@ -6,6 +6,7 @@ on:
       - 'infra/terraform/**'
   push:
     branches:
+      - main
       - 'feature/**'
     paths:
       - 'infra/terraform/**'
