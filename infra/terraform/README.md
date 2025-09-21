@@ -37,7 +37,6 @@ cd infra/terraform
 export AWS_PROFILE=your-profile
 
 ## One-time local bootstrap (first run only)
-
 Create the remote backend resources using local state, then migrate state to S3:
 
 ```bash

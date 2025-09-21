@@ -14,7 +14,6 @@ terraform {
   backend "s3" {}
 }
 
-
 # EKS cluster access for Kubernetes and Helm providers
 # Delay reading the EKS cluster until after it is created by the module
 data "aws_eks_cluster" "this" {

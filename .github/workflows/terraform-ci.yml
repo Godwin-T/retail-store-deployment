@@ -57,9 +57,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: |
-          terraform apply -target=module.eks -auto-approve
-          terraform plan -input=false -no-color -out .tfplan
+        run: terraform plan -input=false -no-color -out .tfplan
 
       - name: Save Plan Text
         run: terraform show -no-color .tfplan > plan.txt
