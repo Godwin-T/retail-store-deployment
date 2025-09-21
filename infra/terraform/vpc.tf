@@ -4,7 +4,7 @@ locals {
   azs = slice(data.aws_availability_zones.available.names, 0, var.az_count)
 
   # Split the VPC /16 into /20s for public, then next /20s for private
-  public_subnet_cidrs = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 4, i)]
+  public_subnet_cidrs  = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 4, i)]
   private_subnet_cidrs = [for i in range(var.az_count) : cidrsubnet(var.vpc_cidr, 4, i + var.az_count)]
 }
 
@@ -19,8 +19,8 @@ module "vpc" {
   public_subnets  = local.public_subnet_cidrs
   private_subnets = local.private_subnet_cidrs
 
-  enable_nat_gateway = true
-  single_nat_gateway = true  # reduce cost; set false for HA NAT
+  enable_nat_gateway   = true
+  single_nat_gateway   = true # reduce cost; set false for HA NAT
   enable_dns_hostnames = true
   enable_dns_support   = true
 

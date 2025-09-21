@@ -17,6 +17,8 @@ Note: Running this creates billable AWS resources (EKS, NAT, EC2, etc.). Destroy
   - Environment vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and optionally `AWS_SESSION_TOKEN`
 - kubectl and awscli for validation
 
+Remote state (S3+DynamoDB) is supported out of the box. The Terraform config contains an empty backend block (`terraform { backend "s3" {} }`) and the backend values are supplied via CLI flags (in CI) or during your local migrate step.
+
 ## Structure
 
 - `providers.tf` – AWS provider and default tags
@@ -26,7 +28,7 @@ Note: Running this creates billable AWS resources (EKS, NAT, EC2, etc.). Destroy
 - `eks.tf` – EKS cluster + managed node groups (public subnets)
 - `outputs.tf` – Useful IDs and endpoints
 
-## Usage
+## Usage (with Remote State)
 
 ```bash
 cd infra/terraform
@@ -34,8 +36,51 @@ cd infra/terraform
 # Optionally set your AWS profile
 export AWS_PROFILE=your-profile
 
-# Initialize modules and providers
-terraform init
+## One-time local bootstrap (first run only)
+
+Create the remote backend resources using local state, then migrate state to S3:
+
+```bash
+cd infra/terraform
+
+# Use local state for the first apply
+terraform init -reconfigure -backend=false
+
+# Create only the backend infra (pick unique names/your region)
+terraform apply -auto-approve \
+  -var 'manage_backend=true' \
+  -var 'tf_state_bucket_name=<YOUR_UNIQUE_BUCKET_NAME>' \
+  -var 'tf_state_lock_table_name=<YOUR_DYNAMODB_TABLE_NAME>' \
+  -target aws_s3_bucket.tf_state \
+  -target aws_s3_bucket_versioning.tf_state \
+  -target aws_s3_bucket_public_access_block.tf_state \
+  -target aws_s3_bucket_server_side_encryption_configuration.tf_state \
+  -target aws_dynamodb_table.tf_state_locks
+
+# Migrate local state to S3
+terraform init -reconfigure -migrate-state \
+  -backend-config="bucket=<YOUR_UNIQUE_BUCKET_NAME>" \
+  -backend-config="key=<YOUR_PROJECT_NAME>/infra/terraform.tfstate" \
+  -backend-config="region=<YOUR_AWS_REGION>" \
+  -backend-config="dynamodb_table=<YOUR_DYNAMODB_TABLE_NAME>" \
+  -backend-config="encrypt=true"
+
+# Sanity check pulls state from S3
+terraform state pull > /dev/null && echo "Remote state OK"
+```
+
+## Normal workflow (after bootstrap)
+
+```bash
+cd infra/terraform
+
+# Initialize (uses remote S3 backend)
+terraform init -reconfigure \
+  -backend-config="bucket=<YOUR_UNIQUE_BUCKET_NAME>" \
+  -backend-config="key=<YOUR_PROJECT_NAME>/infra/terraform.tfstate" \
+  -backend-config="region=<YOUR_AWS_REGION>" \
+  -backend-config="dynamodb_table=<YOUR_DYNAMODB_TABLE_NAME>" \
+  -backend-config="encrypt=true"
 
 # Review the plan
 terraform plan -out .terraform.plan
@@ -45,8 +90,8 @@ terraform apply .terraform.plan
 
 # Save kubeconfig and validate the cluster
 aws eks update-kubeconfig \
-  --region us-east-1 \
-  --name bedrock-eks \
+  --region <YOUR_AWS_REGION> \
+  --name <YOUR_CLUSTER_NAME> \
   ${AWS_PROFILE:+--profile $AWS_PROFILE}
 
 kubectl get nodes -o wide
@@ -56,19 +101,25 @@ kubectl get nodes -o wide
 
 Workflows:
 - CI: `.github/workflows/terraform-ci.yml`
-  - Runs `terraform plan` for PRs and `feature/**` pushes, uploads the plan artifact for review.
+  - Runs on PRs and pushes (including `main`) that touch `infra/terraform/**`.
+  - Performs init/validate/plan.
 - CD: `.github/workflows/terraform-cd.yml`
-  - On pushes to `main`, runs `terraform plan -out .tfplan` and applies that saved plan.
-  - Application deployments are handled by Terraform via `helm_release` resources in `kubernetes.tf` using values from `deployment/`.
+  - Triggers on `workflow_run` of the CI workflow and only proceeds when CI completes successfully for a push to `main`.
+  - Checks out the exact commit from the successful CI run and applies the saved plan flow.
+  - Application deployments are handled by Terraform via `helm_release` resources in `kubernetes.tf`.
 
 Setup:
 - Repo secrets:
   - `AWS_ROLE_ARN`: IAM role ARN trusted for GitHub OIDC.
   - `AWS_REGION`: e.g., `us-east-1`.
+  - `TF_STATE_BUCKET`: e.g., `<YOUR_UNIQUE_BUCKET_NAME>` (must already exist from your bootstrap step).
+  - `TF_STATE_LOCK_TABLE`: e.g., `<YOUR_DYNAMODB_TABLE_NAME>`.
 - Optional: protect the `prod` environment to require approval before apply/deploy.
 
+
 Notes:
-- For remote state, uncomment the S3 backend in `providers.tf` (and create the bucket + DynamoDB table first).
+- `providers.tf` contains `terraform { backend "s3" {} }`; backend values are provided via CLI flags in CI and in the commands above.
+- The bucket/table are created and optionally managed by this stack behind the `manage_backend` toggle. Use it only for bootstrap to avoid accidental destroys.
 - Terraform deploys releases: `catalog`, `cart`, `orders`, `ui` in namespace `retail` using `deployment/*.yml`.
 
 ### Developer read-only role
@@ -88,7 +139,7 @@ ROLE_ARN=$(aws iam get-role --role-name bedrock-developers-eks-readonly --query 
 aws sts assume-role --role-arn "$ROLE_ARN" --role-session-name dev-view | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)"' | bash
 
 # Option B: use --role-arn directly with update-kubeconfig
-aws eks update-kubeconfig --region us-east-1 --name bedrock-eks --role-arn "$ROLE_ARN"
+aws eks update-kubeconfig --region <YOUR_AWS_REGION> --name <YOUR_CLUSTER_NAME> --role-arn "$ROLE_ARN"
 
 kubectl get ns
 kubectl get pods -A
@@ -122,7 +173,7 @@ Adjust variables with `-var`, a `*.tfvars` file, or environment variables:
 ## Destroy
 
 ```bash
-terraform destroy -var="region=us-east-1" -var="cluster_name=bedrock-eks"
+terraform destroy -var="region=<YOUR_AWS_REGION>" -var="cluster_name=<YOUR_CLUSTER_NAME>"
 ```
 
 ### Admin access for specific IAM principals
@@ -135,7 +186,7 @@ Grant yourself admin access by applying with your ARN:
 terraform apply -var='admin_principal_arns=["arn:aws:iam::123456789012:user/you"]'
 
 # Then refresh kubeconfig (optionally with --role-arn if you assume a role)
-aws eks update-kubeconfig --region us-east-1 --name bedrock-eks
+aws eks update-kubeconfig --region <YOUR_AWS_REGION> --name <YOUR_CLUSTER_NAME>
 kubectl get nodes
 ```
 

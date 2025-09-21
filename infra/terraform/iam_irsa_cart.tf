@@ -1,7 +1,7 @@
 locals {
-  cart_namespace            = "retail"
-  cart_service_account      = "carts-sa"
-  cart_service_account_sub  = "system:serviceaccount:${local.cart_namespace}:${local.cart_service_account}"
+  cart_namespace           = "retail"
+  cart_service_account     = "carts-sa"
+  cart_service_account_sub = "system:serviceaccount:${local.cart_namespace}:${local.cart_service_account}"
 }
 
 # Resolve OIDC issuer URL and build proper condition keys
@@ -45,7 +45,7 @@ resource "aws_iam_role" "cart_irsa" {
 }
 
 resource "aws_iam_role_policy_attachment" "cart_dynamo_access" {
-  role       = aws_iam_role.cart_irsa.name
+  role = aws_iam_role.cart_irsa.name
   # Use v2 dependencies policy when running without the dependencies module
   policy_arn = aws_iam_policy.carts_dynamo_v2.arn
 }

@@ -160,8 +160,8 @@ resource "kubernetes_deployment" "catalog" {
             http_get {
               path = "/health"
               port = "http"
-  }
-}
+            }
+          }
 
           env_from {
             config_map_ref {

@@ -6,10 +6,10 @@ module "eks" {
     kubernetes = kubernetes.cluster
   }
 
-  cluster_name                   = var.cluster_name
-  cluster_version                = var.cluster_version
-  cluster_endpoint_public_access = true
-  cluster_endpoint_private_access = false
+  cluster_name                             = var.cluster_name
+  cluster_version                          = var.cluster_version
+  cluster_endpoint_public_access           = true
+  cluster_endpoint_private_access          = false
   enable_cluster_creator_admin_permissions = true
 
   cluster_addons = {
@@ -48,7 +48,7 @@ module "eks" {
 
       iam_role_additional_policies = {
         ecr_readonly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-      }    
+      }
     }
   }
 
@@ -141,7 +141,7 @@ module "eks_blueprints_addons" {
 
   enable_aws_load_balancer_controller = true
   # Disable cert-manager when outbound internet is restricted
-  enable_cert_manager                 = true
+  enable_cert_manager = true
 }
 
 resource "time_sleep" "addons" {

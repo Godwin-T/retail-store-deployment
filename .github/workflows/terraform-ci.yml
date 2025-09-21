@@ -6,6 +6,7 @@ on:
       - 'infra/terraform/**'
   push:
     branches:
+      - main
       - 'feature/**'
     paths:
       - 'infra/terraform/**'
@@ -41,7 +42,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: |
+          terraform init -input=false -reconfigure \
+            -backend-config=bucket=${{ secrets.TF_STATE_BUCKET }} \
+            -backend-config=key=project-bedrock/infra/terraform.tfstate \
+            -backend-config=region=${{ secrets.AWS_REGION }} \
+            -backend-config=dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }} \
+            -backend-config=encrypt=true
 
       - name: Terraform Fmt Check
         run: terraform fmt -check
@@ -54,13 +61,3 @@ jobs:
 
       - name: Save Plan Text
         run: terraform show -no-color .tfplan > plan.txt
-
-      - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan-${{ github.sha }}
-          path: |
-            infra/terraform/.tfplan
-            infra/terraform/plan.txt
-
-  # No apply in CI; CD workflow handles apply and app deployments

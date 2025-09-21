@@ -116,7 +116,7 @@ module "dynamodb_carts_v2" {
   hash_key = "id"
 
   attributes = [
-    { name = "id",         type = "S" },
+    { name = "id", type = "S" },
     { name = "customerId", type = "S" }
   ]
 
@@ -162,8 +162,8 @@ EOF
 # Amazon MQ (RabbitMQ) for orders
 ##############################
 locals {
-  mq_default_user_v2      = "default_mq_user"
-  mq_allowed_sgs_v2       = [module.eks.node_security_group_id]
+  mq_default_user_v2 = "default_mq_user"
+  mq_allowed_sgs_v2  = [module.eks.node_security_group_id]
 }
 
 resource "random_password" "mq_password_v2" {

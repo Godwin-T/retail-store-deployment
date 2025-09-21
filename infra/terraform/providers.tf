@@ -10,26 +10,20 @@ provider "aws" {
   }
 }
 
-# Optional: uncomment to configure an S3 backend instead of local state
-#terraform {
-#  backend "s3" {
-#    bucket         = "your-tfstate-bucket"
-#    key            = "project-bedrock/infra/terraform.tfstate"
-#    region         = "us-east-1"
-#    dynamodb_table = "your-tfstate-locks"
-#    encrypt        = true
-#  }
-#}
+terraform {
+  backend "s3" {}
+}
+
 
 # EKS cluster access for Kubernetes and Helm providers
 # Delay reading the EKS cluster until after it is created by the module
 data "aws_eks_cluster" "this" {
-  name = module.eks.cluster_name
+  name       = module.eks.cluster_name
   depends_on = [module.eks]
 }
 
 data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
+  name       = module.eks.cluster_name
   depends_on = [module.eks]
 }
 

@@ -93,3 +93,21 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "manage_backend" {
+  description = "Create/Manage the S3+DynamoDB Terraform backend resources in this stack"
+  type        = bool
+  default     = false
+}
+
+variable "tf_state_bucket_name" {
+  description = "S3 bucket name for Terraform remote state"
+  type        = string
+  default     = null
+}
+
+variable "tf_state_lock_table_name" {
+  description = "DynamoDB table name for Terraform state locking"
+  type        = string
+  default     = null
+}
