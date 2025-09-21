@@ -16,12 +16,12 @@ module "eks" {
     vpc-cni = {
       before_compute = true
       most_recent    = true
-      configuration_values = jsonencode({
-        env = {
-          ENABLE_POD_ENI                    = "true"
-          POD_SECURITY_GROUP_ENFORCING_MODE = "standard"
-        }
-      })
+      # configuration_values = jsonencode({
+      #   env = {
+      #     ENABLE_POD_ENI                    = "true"
+      #     POD_SECURITY_GROUP_ENFORCING_MODE = "standard"
+      #   }
+      #})
     }
   }
 
