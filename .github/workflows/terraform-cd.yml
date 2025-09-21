@@ -49,11 +49,11 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init -input=false -reconfigure \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-            -backend-config="key=${{secrets.BUCKET_KEY}} \
-            -backend-config="region=${{ secrets.AWS_REGION }}" \
-            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}" \
-            -backend-config="encrypt=true"
+            -backend-config=bucket=${{ secrets.TF_STATE_BUCKET }} \
+            -backend-config=key=project-bedrock/infra/terraform.tfstate \
+            -backend-config=region=${{ secrets.AWS_REGION }} \
+            -backend-config=dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }} \
+            -backend-config=encrypt=true
 
       - name: Terraform Plan (save)
         run: terraform plan -input=false -no-color -out .tfplan
