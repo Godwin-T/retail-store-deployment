@@ -41,7 +41,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: |
+          terraform init -input=false -reconfigure \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{secrets.BUCKET_KEY}} \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_STATE_LOCK_TABLE }}" \
+            -backend-config="encrypt=true"
 
       - name: Terraform Fmt Check
         run: terraform fmt -check
@@ -54,4 +60,3 @@ jobs:
 
       - name: Save Plan Text
         run: terraform show -no-color .tfplan > plan.txt
-
