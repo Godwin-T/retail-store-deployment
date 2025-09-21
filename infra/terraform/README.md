@@ -101,10 +101,12 @@ kubectl get nodes -o wide
 
 Workflows:
 - CI: `.github/workflows/terraform-ci.yml`
-  - Runs `terraform plan` for PRs and `feature/**` pushes, uploads the plan artifact for review.
+  - Runs on PRs and pushes (including `main`) that touch `infra/terraform/**`.
+  - Performs init/validate/plan.
 - CD: `.github/workflows/terraform-cd.yml`
-  - On pushes to `main`, runs `terraform plan -out .tfplan` and applies that saved plan.
-  - Application deployments are handled by Terraform via `helm_release` resources in `kubernetes.tf` using values from `deployment/`.
+  - Triggers on `workflow_run` of the CI workflow and only proceeds when CI completes successfully for a push to `main`.
+  - Checks out the exact commit from the successful CI run and applies the saved plan flow.
+  - Application deployments are handled by Terraform via `helm_release` resources in `kubernetes.tf`.
 
 Setup:
 - Repo secrets:
