@@ -653,3 +653,43 @@ resource "kubernetes_service" "ui" {
 
   depends_on = [kubernetes_deployment.ui]
 }
+
+
+resource "kubernetes_ingress_v1" "ui" {
+  provider = kubernetes.cluster
+
+  metadata {
+    name      = "ui"
+    namespace = kubernetes_namespace.retail.metadata[0].name
+    annotations = {
+      # Internet-facing ALB, targets Pod IPs
+      "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
+      "alb.ingress.kubernetes.io/target-type" = "ip"
+      # Optional: tune health checks, listeners, etc.
+      # "alb.ingress.kubernetes.io/healthcheck-path" = "/"
+      # "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\":80}]"
+    }
+  }
+
+  spec {
+    # Use the ALB ingress class installed by the controller
+    ingress_class_name = "alb"
+
+    rule {
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = kubernetes_service.ui.metadata[0].name
+              port { number = 80 }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [kubernetes_service.ui]
+}
